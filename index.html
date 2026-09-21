@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investeringsvergelijking Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-title-block">
+        <h1>Investeringsvergelijking Dashboard</h1>
+        <p id="headerSubtitle" class="header-subtitle">Vergelijking over — jaar</p>
+      </div>
+      <div class="header-actions">
+        <input type="text" id="scenarioName" class="scenario-name-input" placeholder="Scenarionaam">
+        <button id="openNotesBtn" type="button">Aantekeningen</button>
+        <button id="saveScenarioBtn" class="primary">Scenario opslaan</button>
+        <button id="loadScenarioBtn">Scenario laden</button>
+        <button id="resetBtn">Standaardwaarden herstellen</button>
+      </div>
+    </header>
+
+    <div id="errorsBanner" class="errors-banner"></div>
+
+    <section id="verdictStrip" class="verdict-strip" aria-live="polite" hidden>
+      <div class="verdict-main">
+        <span id="verdictWinnerLabel" class="verdict-winner-label"></span>
+        <span id="verdictDifference" class="verdict-difference"></span>
+      </div>
+      <div class="verdict-meta">
+        <span id="verdictHorizon"></span>
+        <span id="verdictCrossover" class="verdict-crossover"></span>
+      </div>
+    </section>
+
+    <!-- Algemene instellingen -->
+    <section class="panel">
+      <h2>Algemene instellingen</h2>
+      <div class="global-settings">
+        <div class="input-group">
+          <label for="horizonYears">Beleggingshorizon (jaren)</label>
+          <input type="number" id="horizonYears" min="1" max="40" step="1">
+        </div>
+        <div class="input-group">
+          <label for="inflationRate">Inflatiepercentage (%)</label>
+          <input type="number" id="inflationRate" min="0" max="20" step="0.1">
+        </div>
+        <div class="input-group">
+          <label for="propertyExitMode">Verkoop woning</label>
+          <select id="propertyExitMode">
+            <option value="sell">Verkopen aan het einde</option>
+            <option value="hold">Behouden (geen verkoop)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Invoerkolommen -->
+    <div class="two-columns">
+      <!-- Appartement -->
+      <section class="panel collapsible-panel">
+        <details>
+          <summary>Optie 1: Huurappartement</summary>
+          <div class="panel-content">
+        <h3 class="input-section-title">Aankoop &amp; financiering</h3>
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="buildingPrice">Aankoopprijs gebouw</label>
+            <input type="number" id="buildingPrice" min="0" step="1000">
+          </div>
+          <div class="input-group">
+            <label for="landPrice">Aankoopprijs grond</label>
+            <input type="number" id="landPrice" min="0" step="1000">
+          </div>
+          <div class="input-group readonly">
+            <label for="totalPurchasePrice">Totale aankoopprijs</label>
+            <input type="text" id="totalPurchasePrice" readonly>
+          </div>
+          <div class="input-group">
+            <label for="downPayment">Eigen inbreng</label>
+            <input type="number" id="downPayment" min="0" step="1000">
+          </div>
+          <div class="input-group">
+            <label for="openClosingCostsBtn">Bijkomende kosten</label>
+            <button type="button" id="openClosingCostsBtn" class="closing-costs-field" aria-haspopup="dialog" aria-controls="closingCostsDrawer">
+              <span id="closingCostsSummary">€0</span>
+              <span class="closing-costs-chevron" aria-hidden="true">›</span>
+            </button>
+          </div>
+          <div class="input-group">
+            <label for="loanPrincipalOverride">Leningbedrag (handmatig)</label>
+            <input type="number" id="loanPrincipalOverride" min="0" step="1000" placeholder="Automatisch berekend">
+            <span class="hint">Laat leeg voor aankoopprijs + bijkomende kosten − eigen inbreng</span>
+          </div>
+          <div class="input-group readonly">
+            <label for="computedLoanPrincipal">Berekend leningbedrag</label>
+            <input type="text" id="computedLoanPrincipal" readonly>
+          </div>
+          <div class="input-group">
+            <label for="interestRate">Rente (% per jaar)</label>
+            <input type="number" id="interestRate" min="0" max="30" step="0.1">
+          </div>
+        </div>
+
+        <h3 class="input-section-title">Huur &amp; waarde</h3>
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="monthlyRent">Maandelijkse huur</label>
+            <input type="number" id="monthlyRent" min="0" step="50">
+          </div>
+          <div class="input-group">
+            <label for="rentGrowthRate">Huurgroei (% per jaar)</label>
+            <input type="number" id="rentGrowthRate" min="0" max="20" step="0.1">
+          </div>
+          <div class="input-group">
+            <label for="appreciationRate">Waardeontwikkeling woning (% per jaar)</label>
+            <input type="number" id="appreciationRate" min="-10" max="20" step="0.1">
+          </div>
+        </div>
+
+        <h3 class="input-section-title">Kosten</h3>
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="openAnnualCostsBtn">Jaarlijkse kosten</label>
+            <button type="button" id="openAnnualCostsBtn" class="closing-costs-field" aria-haspopup="dialog" aria-controls="annualCostsDrawer">
+              <span id="annualCostsSummary">€0</span>
+              <span class="closing-costs-chevron" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </div>
+
+        <details class="nested-details">
+          <summary>Aangepaste terugkerende kosten</summary>
+          <div id="customCostsList" class="custom-costs-list"></div>
+          <button id="addCustomCostBtn" type="button">+ Kosten toevoegen</button>
+        </details>
+          </div>
+        </details>
+      </section>
+
+      <!-- ETF -->
+      <section class="panel collapsible-panel">
+        <details>
+          <summary>Optie 2: ETF-tracker</summary>
+          <div class="panel-content">
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="initialLumpSum">Initieel bedrag (dag 0)</label>
+            <input type="number" id="initialLumpSum" min="0" step="1000">
+            <span class="hint">Bij gekoppelde vergelijking: €0 (volledige financiering).</span>
+          </div>
+          <div class="input-group">
+            <label for="contributionAmount">Inlegbedrag</label>
+            <input type="number" id="contributionAmount" min="0" step="50">
+          </div>
+          <div class="input-group">
+            <label for="contributionFrequency">Inlegfrequentie</label>
+            <select id="contributionFrequency">
+              <option value="monthly">Maandelijks</option>
+              <option value="semiannual">Elke 6 maanden</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="annualReturn">Verwacht jaarlijks rendement (%)</label>
+            <input type="number" id="annualReturn" min="-50" max="50" step="0.1">
+            <span class="hint">Accumulerende tracker: rendement blijft in het fonds en compoundt maandelijks (minus beheerskosten).</span>
+          </div>
+          <div class="input-group">
+            <label for="managementFee">Beheerskosten (% per jaar)</label>
+            <input type="number" id="managementFee" min="0" max="5" step="0.05">
+          </div>
+        </div>
+        <div class="helper-row etf-mirror-row">
+          <label class="etf-mirror-toggle">
+            <input type="checkbox" id="mirrorApartmentCashflow" checked>
+            Maandelijkse inleg = netto maandlast appartement
+          </label>
+          <button id="matchApartmentOutflowBtn" type="button">Opnieuw berekenen uit appartement</button>
+        </div>
+        <div id="etfMirrorExplanation" class="etf-mirror-explanation" hidden></div>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <!-- Weergavetabs -->
+    <div class="view-tabs">
+      <button class="view-tab active" data-view="nominal">Nominaal</button>
+      <button class="view-tab" data-view="real">Gecorrigeerd voor inflatie (reëel)</button>
+    </div>
+
+    <!-- Samenvatting KPI's -->
+    <div class="summary-grid" id="summaryGrid">
+      <div class="summary-card" id="apartmentSummary">
+        <h3>Huurappartement <span class="winner-badge" id="apartmentWinnerBadge" style="display:none">Winnaar</span></h3>
+        <div class="kpi-grid" id="apartmentKpis"></div>
+      </div>
+      <div class="summary-card" id="etfSummary">
+        <h3>ETF-tracker <span class="winner-badge" id="etfWinnerBadge" style="display:none">Winnaar</span></h3>
+        <div class="kpi-grid" id="etfKpis"></div>
+      </div>
+    </div>
+
+    <!-- Grafieken -->
+    <div class="charts-grid">
+      <div class="chart-container" id="netWorthChartContainer">
+        <h3>Vermogen in de tijd</h3>
+        <p id="netWorthChartSubtitle" class="chart-subtitle"></p>
+        <div class="chart-wrapper">
+          <canvas id="netWorthChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-container" id="comparisonChartContainer">
+        <h3>Eindvermogen</h3>
+        <p id="comparisonChartFootnote" class="chart-subtitle"></p>
+        <div class="chart-wrapper">
+          <canvas id="comparisonChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jaarlijkse tabel -->
+    <section class="panel table-panel">
+      <details>
+        <summary>Jaarlijkse uitsplitsing</summary>
+        <div class="table-wrapper">
+          <table id="yearlyTable">
+            <thead>
+              <tr>
+                <th>Jaar</th>
+                <th>App. vermogen</th>
+                <th>App. geïnvesteerd</th>
+                <th>ETF vermogen</th>
+                <th>ETF geïnvesteerd</th>
+                <th title="Positief = huurappartement ligt voor">Voordeel appartement</th>
+              </tr>
+            </thead>
+            <tbody id="yearlyTableBody"></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <!-- Bijkomende kosten zijpaneel -->
+  <div id="closingCostsDrawer" class="drawer-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="closingCostsDrawerTitle">
+    <button type="button" class="drawer-backdrop" id="closingCostsBackdrop" aria-label="Sluiten"></button>
+    <aside class="drawer-panel" aria-labelledby="closingCostsDrawerTitle">
+      <header class="drawer-header">
+        <h3 id="closingCostsDrawerTitle">Bijkomende kosten</h3>
+        <button type="button" id="closeClosingCostsBtn" class="drawer-close" aria-label="Sluiten">✕</button>
+      </header>
+      <div class="drawer-content">
+        <p class="drawer-intro">Pas de onderdelen van de bijkomende kosten aan. Het totaal wordt automatisch bijgewerkt.</p>
+        <div class="input-grid closing-costs-grid" id="closingCostsGrid"></div>
+        <div class="input-group readonly closing-costs-total">
+          <label for="totalClosingCosts">Totaal bijkomende kosten</label>
+          <input type="text" id="totalClosingCosts" readonly>
+        </div>
+      </div>
+      <footer class="drawer-footer">
+        <button type="button" id="applyClosingCostsBtn" class="primary">Sluiten</button>
+      </footer>
+    </aside>
+  </div>
+
+  <!-- Jaarlijkse kosten zijpaneel -->
+  <div id="annualCostsDrawer" class="drawer-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="annualCostsDrawerTitle">
+    <button type="button" class="drawer-backdrop" id="annualCostsBackdrop" aria-label="Sluiten"></button>
+    <aside class="drawer-panel" aria-labelledby="annualCostsDrawerTitle">
+      <header class="drawer-header">
+        <h3 id="annualCostsDrawerTitle">Jaarlijkse kosten</h3>
+        <button type="button" id="closeAnnualCostsBtn" class="drawer-close" aria-label="Sluiten">✕</button>
+      </header>
+      <div class="drawer-content">
+        <p class="drawer-intro">Pas de jaarlijkse kosten aan. Het totaal wordt automatisch bijgewerkt.</p>
+        <div class="input-grid closing-costs-grid" id="annualCostsGrid">
+          <div class="input-group">
+            <label for="propertyTaxYearly">Onroerende voorheffing</label>
+            <input type="number" id="propertyTaxYearly" min="0" step="100">
+          </div>
+          <div class="input-group">
+            <label for="insuranceYearly">Brandverzekering</label>
+            <input type="number" id="insuranceYearly" min="0" step="100">
+          </div>
+          <div class="input-group">
+            <label for="maintenanceYearly">Kleine herstellingen</label>
+            <input type="number" id="maintenanceYearly" min="0" step="100">
+          </div>
+          <div class="input-group">
+            <label for="syndicYearly">Syndicus</label>
+            <input type="number" id="syndicYearly" min="0" step="100">
+          </div>
+          <div class="input-group">
+            <label for="reserveFundYearly">Reservefonds</label>
+            <input type="number" id="reserveFundYearly" min="0" step="100">
+          </div>
+          <div class="input-group">
+            <label for="vacancyReserveYearly">Leegstandsreserve</label>
+            <input type="number" id="vacancyReserveYearly" min="0" step="100">
+          </div>
+        </div>
+        <div class="input-group readonly closing-costs-total">
+          <label for="totalAnnualCosts">Totaal jaarlijkse kosten</label>
+          <input type="text" id="totalAnnualCosts" readonly>
+        </div>
+      </div>
+      <footer class="drawer-footer">
+        <button type="button" id="applyAnnualCostsBtn" class="primary">Sluiten</button>
+      </footer>
+    </aside>
+  </div>
+
+  <!-- Aantekeningen zijpaneel -->
+  <div id="notesDrawer" class="drawer-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="notesDrawerTitle">
+    <button type="button" class="drawer-backdrop" id="notesBackdrop" aria-label="Sluiten"></button>
+    <aside class="drawer-panel" aria-labelledby="notesDrawerTitle">
+      <header class="drawer-header">
+        <h3 id="notesDrawerTitle">Aantekeningen</h3>
+        <button type="button" id="closeNotesBtn" class="drawer-close" aria-label="Sluiten">✕</button>
+      </header>
+      <div class="drawer-content">
+        <p class="drawer-intro">Vrije notities bij dit scenario. Worden automatisch opgeslagen en meegenomen bij scenario opslaan/laden.</p>
+        <div class="input-group">
+          <label for="scenarioNotes" class="visually-hidden">Aantekeningen</label>
+          <textarea id="scenarioNotes" class="notes-textarea" rows="14" placeholder="Schrijf hier je aantekeningen…"></textarea>
+        </div>
+      </div>
+      <footer class="drawer-footer">
+        <button type="button" id="applyNotesBtn" class="primary">Sluiten</button>
+      </footer>
+    </aside>
+  </div>
+
+  <!-- Scenario laden modal -->
+  <div id="loadModal" class="modal-overlay">
+    <div class="modal">
+      <h3>Opgeslagen scenario laden</h3>
+      <ul id="scenarioList" class="scenario-list"></ul>
+      <div class="modal-actions">
+        <button id="closeModalBtn">Annuleren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Berekenings-assistent -->
+  <button type="button" id="chatAssistantToggle" class="chat-assistant-toggle" aria-expanded="false" aria-controls="chatAssistantPanel" title="Vraag over berekeningen">
+    ?
+  </button>
+  <div id="chatAssistantPanel" class="chat-assistant-panel" hidden role="dialog" aria-labelledby="chatAssistantTitle">
+    <header class="chat-assistant-header">
+      <h2 id="chatAssistantTitle">Berekenings-assistent</h2>
+      <button type="button" id="chatAssistantClose" class="chat-assistant-close" aria-label="Sluiten">✕</button>
+    </header>
+    <p class="chat-assistant-intro">Vragen over KPI’s, formules en jouw actuele cijfers.</p>
+    <div id="chatAssistantMessages" class="chat-assistant-messages"></div>
+    <form id="chatAssistantForm" class="chat-assistant-form">
+      <input type="text" id="chatAssistantInput" placeholder="Bv. Hoe wordt ETF eindvermogen berekend?" autocomplete="off" maxlength="500">
+      <button type="submit" class="primary">Verstuur</button>
+    </form>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+  <script>
+    (function () {
+      if (location.protocol === 'file:') {
+        var banner = document.getElementById('errorsBanner');
+        if (banner) {
+          banner.dataset.bootMessage = '1';
+          banner.classList.add('visible');
+          banner.innerHTML =
+            '<strong>Open via een webserver:</strong> als je <code>index.html</code> direct als bestand opent, werken modules en opslag vaak niet. ' +
+            'In de projectmap: <code>python3 -m http.server 8080</code>, daarna <code>http://localhost:8080</code> in de browser.';
+        }
+      }
+      window.setTimeout(function () {
+        if (!window.__dashboardReady) {
+          var banner = document.getElementById('errorsBanner');
+          if (banner && !window.__dashboardReady) {
+            banner.dataset.bootMessage = '1';
+            banner.classList.add('visible');
+            banner.innerHTML =
+              '<strong>Dashboard start niet:</strong> JavaScript laadt niet (controleer F12 → Console) of Chart.js is geblokkeerd. Gebruik een lokale webserver.';
+          }
+        }
+      }, 2500);
+    })();
+  </script>
+</body>
+</html>
