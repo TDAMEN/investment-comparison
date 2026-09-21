@@ -38,6 +38,7 @@ const FIELD_MAP = {
   horizonYears: { path: 'global.horizonYears', type: 'number' },
   inflationRate: { path: 'global.inflationRate', type: 'number' },
   propertyExitMode: { path: 'global.propertyExitMode', type: 'string' },
+  sellingCostsPct: { path: 'global.sellingCostsPct', type: 'number' },
   buildingPrice: { path: 'apartment.buildingPrice', type: 'number' },
   landPrice: { path: 'apartment.landPrice', type: 'number' },
   downPayment: { path: 'apartment.downPayment', type: 'number' },

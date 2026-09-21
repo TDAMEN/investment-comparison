@@ -79,7 +79,7 @@ export function getDefaultConfig() {
       horizonYears: 20,
       inflationRate: 2.5,
       propertyExitMode: 'sell',
-      sellingCostsPct: 5,
+      sellingCostsPct: 3,
     },
     apartment,
     etf: {
@@ -241,6 +241,10 @@ export function validateConfig(config) {
 
   if (global.horizonYears < 1 || global.horizonYears > 40) {
     errors.push('De horizon moet tussen 1 en 40 jaar liggen.');
+  }
+
+  if (global.sellingCostsPct < 0 || global.sellingCostsPct > 30) {
+    errors.push('Verkoopkosten moeten tussen 0% en 30% liggen.');
   }
 
   const purchasePrice = getPurchasePrice(apartment);
