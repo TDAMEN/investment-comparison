@@ -12,6 +12,15 @@ Open [http://localhost:8080](http://localhost:8080).
 
 ## Online (GitHub Pages)
 
-Na deploy: **https://&lt;jouw-github-gebruiker&gt;.github.io/investment-comparison/**
+1. Maak op GitHub een **public** repository `investment-comparison` (leeg, geen README).
+2. In deze map:
 
-Wijzigingen op `main` zijn binnen ~1 minuut zichtbaar.
+```bash
+git remote add origin git@github.com:JOUW-GEBRUIKER/investment-comparison.git
+git push -u origin main
+```
+
+3. Op GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+4. Na de eerste workflow-run: **https://JOUW-GEBRUIKER.github.io/investment-comparison/**
+
+Scenario’s en aantekeningen blijven in **localStorage** per browser (niet op GitHub).
