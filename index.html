@@ -62,7 +62,7 @@
     <div class="two-columns">
       <!-- Appartement -->
       <section class="panel collapsible-panel">
-        <details>
+        <details id="optionApartmentDetails">
           <summary>Optie 1: Huurappartement</summary>
           <div class="panel-content">
         <h3 class="input-section-title">Aankoop &amp; financiering</h3>
@@ -143,14 +143,14 @@
 
       <!-- ETF -->
       <section class="panel collapsible-panel">
-        <details>
+        <details id="optionEtfDetails">
           <summary>Optie 2: ETF-tracker</summary>
           <div class="panel-content">
         <div class="input-grid">
           <div class="input-group">
             <label for="initialLumpSum">Initieel bedrag (dag 0)</label>
             <input type="number" id="initialLumpSum" min="0" step="1000">
-            <span class="hint">Bij gekoppelde vergelijking: €0 (volledige financiering).</span>
+            <span class="hint">Bij koppeling: gelijk aan eigen inbreng appartement (€0 bij volledige financiering).</span>
           </div>
           <div class="input-group">
             <label for="contributionAmount">Inlegbedrag</label>

@@ -423,7 +423,7 @@ function onAddCustomCost() {
 
 function applyApartmentMirrorToEtf(cfg) {
   const breakdown = getApartmentMonthlyOutflowBreakdown(cfg);
-  cfg.etf.initialLumpSum = 0;
+  cfg.etf.initialLumpSum = Math.max(0, Number(cfg.apartment.downPayment) || 0);
   cfg.etf.contributionAmount = Math.round(breakdown.netMonthlyOutflow * 100) / 100;
   cfg.etf.contributionFrequency = 'monthly';
   return breakdown;
@@ -463,7 +463,7 @@ function renderEtfMirrorExplanation(breakdown) {
       <li><strong>+ Aangepaste kosten</strong> in maand 1: ${formatCurrency(breakdown.monthlyCustomCosts, sym)}/maand</li>
     </ol>
     <p class="etf-mirror-result"><strong>Netto uit eigen pocket (ETF-inleg)</strong> = max(0, lening + kosten − huur) = <strong>${formatCurrency(breakdown.netMonthlyOutflow, sym)}/maand</strong></p>
-    <p class="hint">Initieel ETF-bedrag blijft €0 (100% financiering). Bijkomende kosten bij aankoop zitten alleen in het appartement-pad (dag 0), niet in de ETF-inleg.</p>
+    <p class="hint"><strong>Initieel ETF-bedrag (dag 0)</strong> = eigen inbreng appartement: <strong>${formatCurrency(config.apartment.downPayment, sym)}</strong>. Bij €0 eigen inbreng start de ETF ook op €0. Bijkomende kosten bij aankoop tellen alleen mee in het appartement-pad.</p>
     <p class="hint">Later wijken maandlasten af door huurgroei; de ETF-inleg blijft dit startbedrag tot je de koppeling uitzet.</p>
     ${surplusNote}
   `;
@@ -786,6 +786,29 @@ function onReset() {
   }
 }
 
+function initLinkedOptionPanels() {
+  const apartmentDetails = document.getElementById('optionApartmentDetails');
+  const etfDetails = document.getElementById('optionEtfDetails');
+  if (!apartmentDetails || !etfDetails) return;
+
+  let syncing = false;
+
+  const syncOpenState = (source, target) => {
+    if (syncing) return;
+    syncing = true;
+    target.open = source.open;
+    syncing = false;
+  };
+
+  apartmentDetails.addEventListener('toggle', () => {
+    syncOpenState(apartmentDetails, etfDetails);
+  });
+
+  etfDetails.addEventListener('toggle', () => {
+    syncOpenState(etfDetails, apartmentDetails);
+  });
+}
+
 function init() {
   const closingDrawer = document.getElementById('closingCostsDrawer');
   if (closingDrawer) {
@@ -806,6 +829,7 @@ function init() {
   }
 
   initClosingCostsGrid();
+  initLinkedOptionPanels();
   populateForm();
 
   for (const id of Object.keys(FIELD_MAP)) {

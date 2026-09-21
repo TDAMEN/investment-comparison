@@ -176,7 +176,7 @@ Formule startmaand: max(0, lening + kosten − huur)
 • + Aangepaste kosten maand 1: ${formatCurrency(b.monthlyCustomCosts)}/maand
 
 **→ Inleg in dashboard:** ${formatCurrency(ctx.config.etf.contributionAmount)}/maand  
-Initieel ETF-bedrag: ${formatCurrency(ctx.config.etf.initialLumpSum)} (100% financiering = €0).`;
+Initieel ETF-bedrag: ${formatCurrency(ctx.config.etf.initialLumpSum)} (= eigen inbreng appartement ${formatCurrency(ctx.config.apartment.downPayment)}).`;
     },
   },
   {
