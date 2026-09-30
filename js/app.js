@@ -1,5 +1,9 @@
 import {
   getDefaultConfig,
+  getFactoryDefaultConfig,
+  hasUserDefaultConfig,
+  saveUserDefaultConfig,
+  clearUserDefaultConfig,
   normalizeConfig,
   validateConfig,
   getLoanPrincipal,
@@ -779,12 +783,57 @@ function closeModal() {
   document.getElementById('loadModal').classList.remove('visible');
 }
 
+/** Eén herstelknop; fabrieksknop alleen zichtbaar als «Standaard opslaan» eerder is gebruikt. */
+function syncDefaultsButtonsUi() {
+  const resetBtn = document.getElementById('resetBtn');
+  const factoryBtn = document.getElementById('resetFactoryBtn');
+  if (!resetBtn || !factoryBtn) return;
+
+  const hasUser = hasUserDefaultConfig();
+  if (hasUser) {
+    resetBtn.textContent = 'Jouw standaard herstellen';
+    resetBtn.title =
+      'Zet alle velden terug naar wat je met «Standaard opslaan» hebt bewaard (niet per se fabriekswaarden).';
+    factoryBtn.hidden = false;
+    factoryBtn.title =
+      'Laadt de ingebouwde fabriekswaarden en wist je opgeslagen standaard in deze browser.';
+  } else {
+    resetBtn.textContent = 'Herstellen';
+    resetBtn.title = 'Zet alle velden terug naar de fabrieksstandaard.';
+    factoryBtn.hidden = true;
+  }
+}
+
 function onReset() {
-  if (confirm('Alle invoervelden terugzetten naar standaardwaarden?')) {
+  const msg = hasUserDefaultConfig()
+    ? 'Alle invoervelden terugzetten naar jouw opgeslagen standaard (via «Standaard opslaan»)?'
+    : 'Alle invoervelden terugzetten naar de fabrieksstandaard?';
+  if (confirm(msg)) {
     config = getDefaultConfig();
     populateForm();
     recalculate();
   }
+}
+
+function onSaveUserDefaults() {
+  config = persistConfigFromForm();
+  if (saveUserDefaultConfig(config)) {
+    syncDefaultsButtonsUi();
+    alert(
+      'Standaardwaarden opgeslagen. «Jouw standaard herstellen» gebruikt voortaan deze invoer; «Fabrieksstandaard» blijft de ingebouwde waarden.',
+    );
+  } else {
+    alert('Opslaan mislukt. Controleer of localStorage beschikbaar is.');
+  }
+}
+
+function onResetFactory() {
+  if (!confirm('Fabrieksstandaard laden en je opgeslagen standaard wissen?')) return;
+  clearUserDefaultConfig();
+  config = getFactoryDefaultConfig();
+  populateForm();
+  recalculate();
+  syncDefaultsButtonsUi();
 }
 
 function initLinkedOptionPanels() {
@@ -832,6 +881,7 @@ function init() {
   initClosingCostsGrid();
   initLinkedOptionPanels();
   populateForm();
+  syncDefaultsButtonsUi();
 
   for (const id of Object.keys(FIELD_MAP)) {
     const el = document.getElementById(id);
@@ -846,6 +896,8 @@ function init() {
   document.getElementById('saveScenarioBtn').addEventListener('click', onSaveScenario);
   document.getElementById('loadScenarioBtn').addEventListener('click', onLoadScenario);
   document.getElementById('resetBtn').addEventListener('click', onReset);
+  document.getElementById('saveUserDefaultsBtn').addEventListener('click', onSaveUserDefaults);
+  document.getElementById('resetFactoryBtn').addEventListener('click', onResetFactory);
   document.getElementById('closeModalBtn').addEventListener('click', closeModal);
 
   document.querySelectorAll('.view-tab').forEach((tab) => {

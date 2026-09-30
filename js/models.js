@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'investment-scenarios';
 const ACTIVE_SCENARIO_KEY = 'investment-active-scenario';
+const USER_DEFAULTS_KEY = 'investment-user-defaults';
 
 export const TAX_PERCENTAGE_RATES = [6, 12, 21];
 export const BUILDING_VAT_RATES = TAX_PERCENTAGE_RATES;
@@ -52,7 +53,7 @@ export function getTotalClosingCosts(apartment) {
   return manualTotal + getBuildingVatAmount(apartment) + getLandRegistrationTaxAmount(apartment);
 }
 
-export function getDefaultConfig() {
+export function getBuiltInDefaultConfig() {
   const apartment = {
     buildingPrice: 280000,
     landPrice: 70000,
@@ -62,14 +63,14 @@ export function getDefaultConfig() {
     interestRate: 3.5,
     monthlyRent: 1400,
     rentGrowthRate: 2,
-      appreciationRate: 3,
-      propertyTaxYearly: 2000,
-      insuranceYearly: 1000,
-      maintenanceYearly: 1500,
-      syndicYearly: 0,
-      reserveFundYearly: 0,
-      vacancyReserveYearly: 0,
-      customCosts: [],
+    appreciationRate: 3,
+    propertyTaxYearly: 1200,
+    insuranceYearly: 200,
+    maintenanceYearly: 400,
+    syndicYearly: 450,
+    reserveFundYearly: 400,
+    vacancyReserveYearly: 800,
+    customCosts: [],
   };
 
   return {
@@ -91,6 +92,53 @@ export function getDefaultConfig() {
       managementFee: 0.2,
     },
   };
+}
+
+export function getDefaultConfig() {
+  const userRaw = loadUserDefaultConfigRaw();
+  if (userRaw) {
+    return normalizeConfig(userRaw);
+  }
+  return normalizeConfig(getBuiltInDefaultConfig());
+}
+
+function loadUserDefaultConfigRaw() {
+  try {
+    const stored = localStorage.getItem(USER_DEFAULTS_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+export function hasUserDefaultConfig() {
+  return loadUserDefaultConfigRaw() !== null;
+}
+
+export function saveUserDefaultConfig(config) {
+  const normalized = normalizeConfig(config);
+  try {
+    localStorage.setItem(USER_DEFAULTS_KEY, JSON.stringify(normalized));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function clearUserDefaultConfig() {
+  try {
+    localStorage.removeItem(USER_DEFAULTS_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function getFactoryDefaultConfig() {
+  return normalizeConfig(getBuiltInDefaultConfig());
 }
 
 function coerceNumber(value, fallback) {
@@ -147,7 +195,7 @@ function sanitizeNumericConfig(config, defaults) {
 }
 
 export function normalizeConfig(raw) {
-  const defaults = getDefaultConfig();
+  const defaults = getBuiltInDefaultConfig();
   const config = {
     scenarioName: raw?.scenarioName ?? defaults.scenarioName,
     scenarioNotes: typeof raw?.scenarioNotes === 'string' ? raw.scenarioNotes : defaults.scenarioNotes,
